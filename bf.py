@@ -23,8 +23,7 @@ with open(filename, 'r') as f:
     program = f.read()
 
 # Main program components
-input_buffer = ''
-input_index = 0
+input_buffer = iter('')
 memory = bytearray([0 for x in range(65536)]) 
 pointer = 0         # memory pointer
 program_counter = 0 # index into the program string
@@ -84,21 +83,19 @@ while program_counter < len(program) and program[program_counter] != '!':
         print(end=chr(memory[pointer]))
     elif char == ',':
         # Input a character and store it in the cell at the pointer
+        c = None
         try:
-            if input_buffer is not None and input_index >= len(input_buffer):
-                input_index = 0
-                input_buffer = input()
+            if input_buffer is not None:
+                c = next(input_buffer)
+        except StopIteration:
+            input_buffer = iter(input())
+            c = next(input_buffer)
         except EOFError:
             input_buffer = None
-            input_index = None
-        if input_buffer is None or len(input_buffer) == 0:
-            if EOF_is_overwrite:
-                memory[pointer] = EOF_value
-        else:
-            c = input_buffer[input_index]
-            input_index += 1
-            x = int(ord(c))
-            memory[pointer] = x
+        if input_buffer is not None:
+            memory[pointer] = int(ord(c))
+        elif EOF_is_overwrite:
+            memory[pointer] = EOF_value
     elif char == '[':
         # Jump past the matching ] if the cell at the pointer is 0
         if memory[pointer] == 0: 
