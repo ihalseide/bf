@@ -5,7 +5,9 @@ import sys,  array
 # --- Customizable settings --- {
 
 # Legal characters that do stuff
-legal_chars = '[]<>,.+-@^#'
+bf_chars = '[]<>,.+-'
+extended_chars = '!@#^'
+any_chars = bf_chars + extended_chars
 
 # How many cells to print out in debug
 num_debug_cells = 20     
@@ -74,7 +76,7 @@ for index, char in enumerate(program):
             raise SyntaxError('unmatched "]" at index %d' % index)
 
 # Start running the program
-while ip < len(program) and program[ip] != '!': 
+while ip < len(program): 
     char = program[ip] 
     if char == '>':
         # Move the pointer to the right
@@ -104,7 +106,7 @@ while ip < len(program) and program[ip] != '!':
         c = sys.stdin.read(1)
         if c:
             memory[cp] = c
-        elif EOF_is_overwrite:
+        elif EOF_is_overwrite: # `c` will be '' when EOF in Python
             memory[cp] = EOF_value
     elif char == '[':
         # Jump past the matching ] if the cell at the pointer is 0
@@ -126,6 +128,7 @@ while ip < len(program) and program[ip] != '!':
         # Debug: print cycle number
         print('\n@%d' % cycles)
         cycles -= 1
-
+    elif '!' == char:
+        break 
     ip += 1
     cycles += 1
