@@ -1,37 +1,56 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 
-'''
-This is a brainf*ck interpreter. It runs text files
-'''
+import sys,  array
 
-import sys 
+# --- Customizable settings --- {
 
-# Customizable settings
-EOF_is_overwrite = False # Determines whether an EOF when getting input will overwrite the cell with an EOF value
-EOF_value = 0            # Choose an End of File value
-num_debug_cells = 200     # How many cells to print out in debug
+# Legal characters that do stuff
+legal_chars = '[]<>,.+-@^#'
+
+# How many cells to print out in debug
+num_debug_cells = 20     
+
+# Number of memory cells
+num_cells = 65536 
+
+# Range of values allowed in the memory cells,
+# The bf standard is 1 unsigned byte / the range 0-255 ('b')
+# Codes are from Python's [array] module:
+#   'b' signed char
+#   'B' unsigned char
+#   'u' wchar_t
+#   'h' signed short
+#   'H' unsigned short
+#   'i' signed int
+#   'I' unsigned int 
+#   'l' signed long
+#   'L' unsigned long 
+#   'q' signed long long 
+#   'Q' unsigned long long 
+cell_type = 'B'
+assert cell_type in array.typecodes
+
+# Input End of File settings
+EOF_is_overwrite = False 
+EOF_value = 0            
+
+# --- End of customizable settings --- }
 
 if len(sys.argv) != 2:
-    print('Usage:')
-    print(sys.argv[0], '[filename]')
+    print('Usage:', print(sys.argv[0], 'filename'))
     sys.exit(-1)
 
-filename = sys.argv[1]
-# Take program from given file
-# With program input from standard input
-with open(filename, 'r') as f:
-    program = f.read()
+with open(sys.argv[1], 'r') as f:
+    program = f.read() 
 
-# Main program components
-input_buffer = iter('')
-memory = bytearray([0 for x in range(65536)]) 
-pointer = 0         # memory pointer
-program_counter = 0 # index into the program string
-cycles = 0          # absolute number of instructions processed
-matches_start = {}  # maps [ to ]
-matches_end = {}    # maps ] to [
+memory = array.array(cell_type, [0 for x in range(num_cells)])
+cp = 0              # cell/memory pointer
+ip = 0              # intruction pointer
+cycles = 0          # keep track of absolute number of instructions processed
 
-# Preprocess the [ bracket ] matches to increase speed
+# Preprocess the brackets matches to increase efficiency a little
+matches_start = {}  # maps '[' to ']'
+matches_end = {}    # maps ']' to '['
 for index, char in enumerate(program):
     if '[' == char:
         depth = 1
@@ -55,67 +74,58 @@ for index, char in enumerate(program):
             raise SyntaxError('unmatched "]"')
 
 # Start running the program
-while program_counter < len(program) and program[program_counter] != '!':
-
-    char = program[program_counter]
-
+while ip < len(program) and program[ip] != '!': 
+    char = program[ip] 
     if char == '>':
         # Move the pointer to the right
-        pointer += 1
-        if pointer >= len(memory):
+        cp += 1
+        if cp >= len(memory):
             # Double memory space if it runs out
             memory += bytearray([0 for x in memory])
     elif char == '<':
         # Move the pointer to the left
-        pointer -= 1
+        cp -= 1
     elif char == '+':
-        # Increment the memory cell at the pointer
-        n = memory[pointer]
+        # Increment the cell at the pointer
+        n = memory[cp]
         n = (n + 1) % 256
-        memory[pointer] = n
+        memory[cp] = n
     elif char == '-':
-        # Decrement the memory cell at the pointer
-        n = memory[pointer]
+        # Decrement the cell at the pointer
+        n = memory[cp]
         n = (n - 1) % 256
-        memory[pointer] = n
+        memory[cp] = n
     elif char == '.':
-        # Output the character signified by the cell at the pointer
-        print(end=chr(memory[pointer]))
+        # Output the character at the cell pointer
+        c = chr(memory[cp])
+        sys.stdout.write(c)
     elif char == ',':
         # Input a character and store it in the cell at the pointer
-        c = None
-        try:
-            if input_buffer is not None:
-                c = next(input_buffer)
-        except StopIteration:
-            input_buffer = iter(input())
-            c = next(input_buffer)
-        except EOFError:
-            input_buffer = None
-        if input_buffer is not None:
-            memory[pointer] = int(ord(c))
+        c = sys.stdin.read(1)
+        if c:
+            memory[cp] = c
         elif EOF_is_overwrite:
-            memory[pointer] = EOF_value
+            memory[cp] = EOF_value
     elif char == '[':
         # Jump past the matching ] if the cell at the pointer is 0
-        if memory[pointer] == 0: 
-            program_counter = matches_start[program_counter]
+        if memory[cp] == 0: 
+            ip = matches_start[ip]
     elif char == ']':
         # Jump back to the matching [ if the cell at the pointer is not 0
-        if memory[pointer] != 0:
-            program_counter = matches_end[program_counter]
+        if memory[cp] != 0:
+            ip = matches_end[ip]
     elif '#' == char:
         # Debug: print first few cells 
         print('\n#[%s...]' % ','.join('%x' % x for x in memory[:num_debug_cells]))
         cycles -= 1
     elif '^' == char:
         # Debug: print pointer location
-        print('\n^%d' % pointer)
+        print('\n^%d' % cp)
         cycles -= 1
     elif '@' == char:
         # Debug: print cycle number
         print('\n@%d' % cycles)
         cycles -= 1
 
-    program_counter += 1
+    ip += 1
     cycles += 1
