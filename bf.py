@@ -2,14 +2,15 @@
 
 # bf interpretter
 
-import sys
-from conf import *
+import sys, argparse
 
-if len(sys.argv) != 2:
-    print('Usage:', print(sys.argv[0], 'filename'))
-    sys.exit(-1)
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+parser.add_argument('-n', default=65535, type=int, help='number of memory cells')
+args = parser.parse_args()
 
-with open(sys.argv[1], 'r') as f:
+num_cells = args.n
+with open(args.file, 'r') as f:
     program = f.read() 
 
 memory = bytearray([0 for x in range(num_cells)])
@@ -51,6 +52,8 @@ while ip < len(program):
     elif char == '<':
         # Move the pointer to the left
         cp -= 1
+        if cp < 0:
+            raise Exception('pointer moved to negative location, at program index %d' % ip)
     elif char == '+':
         # Increment the cell at the pointer
         n = memory[cp]
