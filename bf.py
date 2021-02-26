@@ -2,7 +2,7 @@
 
 # bf interpreter [[https://esolangs.org/wiki/Brainfuck]]
 
-import sys,  array
+import sys
 
 # --- Customizable settings --- {
 
@@ -14,23 +14,6 @@ num_debug_cells = 20
 
 # Number of memory cells
 num_cells = 65536 
-
-# Range of values allowed in the memory cells,
-# The bf standard is 1 unsigned byte / the range 0-255 ('b')
-# Codes are from Python's [array] module:
-#   'b' signed char
-#   'B' unsigned char
-#   'u' wchar_t
-#   'h' signed short
-#   'H' unsigned short
-#   'i' signed int
-#   'I' unsigned int 
-#   'l' signed long
-#   'L' unsigned long 
-#   'q' signed long long 
-#   'Q' unsigned long long 
-cell_type = 'B'
-assert cell_type in array.typecodes
 
 # Input End of File settings
 EOF_is_overwrite = False 
@@ -45,7 +28,7 @@ if len(sys.argv) != 2:
 with open(sys.argv[1], 'r') as f:
     program = f.read() 
 
-memory = array.array(cell_type, [0 for x in range(num_cells)])
+memory = bytearray([0 for x in range(num_cells)])
 cp = 0              # cell/memory pointer
 ip = 0              # intruction pointer
 cycles = 0          # keep track of absolute number of instructions processed
@@ -81,9 +64,6 @@ while ip < len(program):
     if char == '>':
         # Move the pointer to the right
         cp += 1
-        if cp >= len(memory):
-            # Double memory space if it runs out
-            memory += bytearray([0 for x in memory])
     elif char == '<':
         # Move the pointer to the left
         cp -= 1
@@ -118,17 +98,9 @@ while ip < len(program):
             ip = matches_end[ip]
     elif '#' == char:
         # Debug: print first few cells 
-        print('\n#[%s...]' % ','.join('%x' % x for x in memory[:num_debug_cells]))
-        cycles -= 1
-    elif '^' == char:
-        # Debug: print pointer location
-        print('\n^%d' % cp)
-        cycles -= 1
-    elif '@' == char:
-        # Debug: print cycle number
-        print('\n@%d' % cycles)
-        cycles -= 1
+        print('\n[%s...]' % ','.join('%x' % x for x in memory[:num_debug_cells]))
     elif '!' == char:
+        # Extension: separate code from input
+        # Since this is an interpreter, just take it to mean "halt"
         break 
     ip += 1
-    cycles += 1
