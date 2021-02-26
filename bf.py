@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 
 
+# bf interpreter [[https://esolangs.org/wiki/Brainfuck]]
+
 import sys,  array
 
 # --- Customizable settings --- {
