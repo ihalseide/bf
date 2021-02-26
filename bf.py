@@ -1,25 +1,9 @@
 #!/usr/bin/env python3 
 
-# bf interpreter [[https://esolangs.org/wiki/Brainfuck]]
+# bf interpretter
 
 import sys
-
-# --- Customizable settings --- {
-
-# BF characters that actually do stuff
-bf_chars = '[]<>,.+-'
-
-# How many cells to print out in debug
-num_debug_cells = 20     
-
-# Number of memory cells
-num_cells = 65536 
-
-# Input End of File settings
-EOF_is_overwrite = False 
-EOF_value = 0            
-
-# --- End of customizable settings --- }
+import conf
 
 if len(sys.argv) != 2:
     print('Usage:', print(sys.argv[0], 'filename'))
