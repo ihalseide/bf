@@ -68,10 +68,10 @@ for index, char in enumerate(program):
             matches_start[index] = match
             matches_end[match] = index
         else:
-            raise SyntaxError('unmatched "["')
+            raise SyntaxError('unmatched "[" at index %d' % index)
     elif ']' == char:
         if matches_end.get(index) is None:
-            raise SyntaxError('unmatched "]"')
+            raise SyntaxError('unmatched "]" at index %d' % index)
 
 # Start running the program
 while ip < len(program) and program[ip] != '!': 
