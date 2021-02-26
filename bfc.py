@@ -3,7 +3,7 @@
 # bf compiler
 
 import sys
-import conf
+from conf import *
 
 if len(sys.argv) != 2:
     print('Usage:', print(sys.argv[0], 'filename'))
