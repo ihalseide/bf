@@ -6,10 +6,10 @@ import sys, argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('file')
-parser.add_argument('-n', default=65535, type=int, help='number of memory cells')
+parser.add_argument('-num_cells', default=65535, type=int, help='number of memory cells')
 args = parser.parse_args()
 
-num_cells = args.n
+num_cells = args.num_cells
 with open(args.file, 'r') as f:
     program = f.read() 
 
