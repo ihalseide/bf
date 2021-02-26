@@ -4,10 +4,8 @@ import sys,  array
 
 # --- Customizable settings --- {
 
-# Legal characters that do stuff
+# BF characters that actually do stuff
 bf_chars = '[]<>,.+-'
-extended_chars = '!@#^'
-any_chars = bf_chars + extended_chars
 
 # How many cells to print out in debug
 num_debug_cells = 20     
