@@ -1,6 +1,6 @@
 # Brainf*ck interpreter
 
-Run `bf.py [filename]` to run a bf program file.
+Run `bf.py [filename]` to run a bf program file. You can modify the python file to fit some variations among brainf*ck interpers / compilers, including the End of File value, and whether and End of File value will be written to a cell or not.
 
 ## This is the normal language description
 
