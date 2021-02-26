@@ -2,7 +2,7 @@
 
 # BFC interpreter [[https://esolangs.org/wiki/BFC]]
 
-import sys,  array
+import sys, array, string
 
 # --- Customizable settings --- {
 
@@ -50,6 +50,10 @@ cp = 0              # cell/memory pointer
 ip = 0              # intruction pointer
 cycles = 0          # keep track of absolute number of instructions processed
 
+def debug ():
+    # TODO
+    input('debug...')
+
 # Preprocess the brackets matches to increase efficiency a little
 matches_start = {}  # maps '[' to ']'
 matches_end = {}    # maps ']' to '['
@@ -76,59 +80,84 @@ for index, char in enumerate(program):
             raise SyntaxError('unmatched "]" at index %d' % index)
 
 # Start running the program
+num = None
 while ip < len(program): 
     char = program[ip] 
     if char == '>':
         # Move the pointer to the right
-        cp += 1
-        if cp >= len(memory):
-            # Double memory space if it runs out
-            memory += bytearray([0 for x in memory])
+        if num is None:
+            num = 1
+        cp += num
+        num = None
     elif char == '<':
         # Move the pointer to the left
-        cp -= 1
+        if num is None:
+            num = 1
+        cp -= num
+        num = None
     elif char == '+':
         # Increment the cell at the pointer
+        if num is None:
+            num = 1
         n = memory[cp]
-        n = (n + 1) % 256
+        n += num
         memory[cp] = n
+        num = None
     elif char == '-':
         # Decrement the cell at the pointer
+        if num is None:
+            num = 1
         n = memory[cp]
-        n = (n - 1) % 256
+        n -= num
         memory[cp] = n
+        num = None
     elif char == '.':
         # Output the character at the cell pointer
-        c = chr(memory[cp])
-        sys.stdout.write(c)
+        if num is None:
+            num = 1 
+        for i in range(num):
+            c = chr(memory[cp])
+            sys.stdout.write(c)
+        num = None
     elif char == ',':
         # Input a character and store it in the cell at the pointer
-        c = sys.stdin.read(1)
-        if c:
-            memory[cp] = c
-        elif EOF_is_overwrite: # `c` will be '' when EOF in Python
-            memory[cp] = EOF_value
+        if num is None:
+            num = 1 
+        for i in range(num):
+            c = sys.stdin.read(1)
+            if c:
+                memory[cp] = c
+            elif EOF_is_overwrite: # `c` will be '' when EOF in Python
+                memory[cp] = EOF_value
+        num = None
     elif char == '[':
         # Jump past the matching ] if the cell at the pointer is 0
+        if num is not None:
+            raise SyntaxError('cannot have a quantifer before a "[", index %d' % ip)
         if memory[cp] == 0: 
             ip = matches_start[ip]
     elif char == ']':
         # Jump back to the matching [ if the cell at the pointer is not 0
+        if num is not None:
+            raise SyntaxError('cannot have a quantifer before a "]", index %d' % ip)
         if memory[cp] != 0:
             ip = matches_end[ip]
     elif '#' == char:
-        # Debug: print first few cells 
-        print('\n#[%s...]' % ','.join('%x' % x for x in memory[:num_debug_cells]))
-        cycles -= 1
-    elif '^' == char:
-        # Debug: print pointer location
-        print('\n^%d' % cp)
-        cycles -= 1
-    elif '@' == char:
-        # Debug: print cycle number
-        print('\n@%d' % cycles)
-        cycles -= 1
+        # Debug breakpoint
+        debug()
     elif '!' == char:
+        # Stop program (usually used to separate code from input)
         break 
+    elif '_' == char:
+        # BFC Layer 1, zero operator: set the current cell to zero
+        memory[cp] = 0
+    elif char in string.digits:
+        # BFC Layer 1, quantifiers: do the next non-bracket bf instruction N times
+        # (affects the next instruction)
+        look_index = ip
+        while program[look_index] in string.digits:
+            look_index += 1
+        num = int(program[ip:look_index])
+        ip = look_index - 1
     ip += 1
     cycles += 1
