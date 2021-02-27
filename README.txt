@@ -1,4 +1,8 @@
-= Brainf*ck Interpreter and Compiler =
+= Brainfuck Interpreter and Compiler =
+
+== Disclaimer ==
+
+I did not invent the programming language in question. This project's code is just my implementation! For more information, I recommend reading this webpage: [https://esolangs.org/wiki/Brainfuck].
 
 Run `bf.py [filename]` to run the interpreter on a bf program file, and run `bfc.py` to compile a bf program file. Both the interpreter and the compiler have a bunch of command line arguments to customize.
 
@@ -8,9 +12,9 @@ The compiler does a small optimization of compressing strings of +- and >< down 
 
 You can run `bf.py` and then type ",[.[-],]!" to run a "cat" program (a program that repeats all of it's input).
 
-== Brainf*ck Language Description ==
+== Brainfuck Language Description ==
 
-Brainf*ck operates on an array of memory cells, each initially set to zero. (In the original implementation, the array was 30,000 cells long, but this may not be part of the language specification; different sizes for the array length and cell size give different variants of the language). There is a pointer, initially pointing to the first memory cell. The commands are:
+Brainfuck operates on an array of memory cells, each initially set to zero. (In the original implementation, the array was 30,000 cells long, but this may not be part of the language specification; different sizes for the array length and cell size give different variants of the language). There is a pointer, initially pointing to the first memory cell. The commands are:
 
 Command	Description
 
@@ -26,3 +30,7 @@ Command	Description
 ```
 
 All characters other than the ><+-.,[] are considered comments and ignored. 
+
+== License ==
+
+This project is licensed under the MIT License. See the file called LICENSE.txt for more information.
