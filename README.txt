@@ -1,4 +1,11 @@
 = Brainfuck Interpreter and Compiler =
+<<<<<<< HEAD
+=======
+
+== Disclaimer ==
+
+I did not invent the programming language in question. This project's code is just my implementation! For more information, I recommend reading this webpage: [https://esolangs.org/wiki/Brainfuck].
+>>>>>>> 588e873bcb1c3f6e8ad256d9d8577e5be2ce8ed2
 
 Run `bf.py [filename]` to run the interpreter on a bf program file, and run `bfc.py` to compile a bf program file. Both the interpreter and the compiler have a bunch of command line arguments to customize.
 
@@ -27,10 +34,13 @@ Command	Description
 
 All characters other than the ><+-.,[] are considered comments and ignored. 
 
+<<<<<<< HEAD
 == Disclaimer ==
 
 I did not invent the programming language in question. This project's code is just my implementation! For more information, I recommend reading this webpage: [https://esolangs.org/wiki/Brainfuck].
 
+=======
+>>>>>>> 588e873bcb1c3f6e8ad256d9d8577e5be2ce8ed2
 == License ==
 
 This project is licensed under the MIT License. See the file called LICENSE.txt for more information.
