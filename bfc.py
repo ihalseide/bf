@@ -13,8 +13,9 @@ args = parser.parse_args()
 with open(args.file, 'r') as f:
     program = f.read() 
 
+indent = 1
 def print_line (*args, **kwargs):
-    emit('    ' * indent, *args, sep='', end='\n', *kwargs)
+    print('    ' * indent, *args, sep='', end='\n', *kwargs)
 
 # Emit the C Preamble
 print(
@@ -43,7 +44,7 @@ try:
     index, char = next(prog)
     while True:
         if args.debug:
-            emit_line('// %s (index %d)' % (char, index))
+            print_line('// %s (index %d)' % (char, index))
         if char in '<>':
             # Move the pointer to the right or left
             num = 0
@@ -55,7 +56,7 @@ try:
                     num += 1
                 index, char = next(prog)
             if num != 0:
-                emit_line('p += %d;' % num)
+                print_line('p += %d;' % num)
             del num
             continue
         elif char in '+-':
@@ -69,28 +70,28 @@ try:
                     num += 1
                 index, char = next(prog)
             if num != 0:
-                emit_line('*p += %d;' % num)
+                print_line('*p += %d;' % num)
             del num
             continue
         elif '.' == char:
             # Output the character at the cell pointer
-            emit_line('putchar(*p);')
+            print_line('putchar(*p);')
         elif ',' == char:
             # Input a character and store it in the cell at the pointer
             if EOF_is_overwrite:
-                emit_line('*p = getchar();')
+                print_line('*p = getchar();')
             else:
                 raise NotImplemented() 
         elif '[' == char:
             # Jump past the matching ] if the cell at the pointer is 0
             last_lbracket = index
-            emit_line('while (*p) {')
+            print_line('while (*p) {')
             indent += 1
         elif ']' == char :
             # Jump back to the matching [ if the cell at the pointer is not 0
             last_rbracket = index
             indent -= 1
-            emit_line('}')
+            print_line('}')
         elif '#' == char:
             # Debug breakpoint
             pass
@@ -105,7 +106,7 @@ except StopIteration:
     pass
 
 indent -= 1
-emit_line('}')
+print_line('}')
 
 if indent > 0:
     raise SyntaxError('unmatched "[" at index %d' % last_rbracket)
