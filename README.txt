@@ -1,14 +1,14 @@
-# Brainf*ck Interpreter and Compiler
+= Brainf*ck Interpreter and Compiler =
 
 Run `bf.py [filename]` to run the interpreter on a bf program file, and run `bfc.py` to compile a bf program file. Both the interpreter and the compiler have a bunch of command line arguments to customize.
 
 The compiler does a small optimization of compressing strings of +- and >< down to single C statements. The compiler compiles bf code to C code, which you can then pass through whatever C compiler.
 
-## Example
+== Example Program ==
 
 You can run `bf.py` and then type ",[.[-],]!" to run a "cat" program (a program that repeats all of it's input).
 
-## This is the normal language description
+== Brainf*ck Language Description ==
 
 Brainf*ck operates on an array of memory cells, each initially set to zero. (In the original implementation, the array was 30,000 cells long, but this may not be part of the language specification; different sizes for the array length and cell size give different variants of the language). There is a pointer, initially pointing to the first memory cell. The commands are:
 
