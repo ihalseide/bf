@@ -4,6 +4,8 @@ Run `bf.py [filename]` to run the interpreter on a bf program file, and run `bfc
 
 The compiler does a small optimization of compressing strings of +- and >< down to single C statements. The compiler compiles bf code to C code, which you can then pass through whatever C compiler.
 
+For more specific help with the compiler and the interpreter, run the respective programs with the "-h" flag.
+
 == Example Program ==
 
 You can run `bf.py` and then type ",[.[-],]!" to run a "cat" program (a program that repeats all of it's input).
