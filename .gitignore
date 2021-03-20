@@ -1,2 +1,2 @@
-bf examples/
+*.o
 __pycache__/
