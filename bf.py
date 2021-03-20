@@ -68,6 +68,8 @@ try:
         elif char == '<':
             # Move the pointer to the left
             cp -= 1
+            if cp < 0:
+                error("bf error:", "at index %d, pointer moved to negative index on the tape" %ip)
         elif char == '+':
             # Increment the cell at the pointer
             n = memory[cp]
@@ -102,5 +104,5 @@ try:
             print('\n[%s...]' % ','.join('%x' % x for x in memory[:num_debug_cells]))
         ip += 1
 except Exception as e:
-    print('bf: at index %d with pointer at cell %d' % (ip, cp))
+    print('bf: at index %d with pointer at cell %d' % (ip, cp), file=sys.stderr)
     raise e
