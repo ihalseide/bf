@@ -12,13 +12,12 @@ You can run `bf.py` and then type ",[.[-],]!" to run a "cat" program (a program 
 
 == Brainfuck Language Description ==
 
-Brainfuck operates on an array of memory cells, each initially set to zero. (In the original implementation, the array was 30,000 cells long, but this may not be part of the language specification; different sizes for the array length and cell size give different variants of the language). There is a pointer, initially pointing to the first memory cell. The commands are:
+Brainfuck operates on an array of memory cells, each initially set to zero. A memory cell can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
 
-Command	Description
 
 ```
 >	Move the pointer to the right
-<	Move the pointer to the left
+<	Move the pointer to the left (but the pointer cannot be negative)
 +	Increment the memory cell at the pointer
 -	Decrement the memory cell at the pointer
 .	Output the character signified by the cell at the pointer
@@ -27,7 +26,7 @@ Command	Description
 ]	Jump back to the matching [ if the cell at the pointer is nonzero
 ```
 
-All characters other than the ><+-.,[] are considered comments and ignored. 
+All characters other than the commands are considered comments and ignored. 
 
 == Disclaimer ==
 
@@ -36,3 +35,4 @@ I did not invent the programming language in question. This project's code is ju
 == License ==
 
 This project is licensed under the MIT License. See the file called LICENSE.txt for more information.
+
