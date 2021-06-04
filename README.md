@@ -34,11 +34,11 @@ The compiler is a Python program that transforms bf code into C code. Run `$ pyt
 
 ## Example Program
 
-You can run `$ python bf.py -` and then type ",[.[-],]!" to run a "cat" program (a program that repeats all of it's input).
+You can run `$ python bf.py -` and then type `,[.[-],]!`. That runs a "cat" program (a program that outputs it's inputs).
 
 ## Brainfuck Language Description
 
-Brainfuck operates on an array of memory cells, each initially set to zero. A memory cell can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
+Brainfuck operates on an array of memory cells, the "tape", each initially set to zero. A memory cell is a byte and can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
 
 * \>	Move the pointer to the right
 * <	Move the pointer to the left (but the pointer cannot be negative)
@@ -49,7 +49,7 @@ Brainfuck operates on an array of memory cells, each initially set to zero. A me
 * [	Jump past the matching ] if the cell at the pointer is 0
 * ]	Jump back to the matching [ if the cell at the pointer is nonzero
 
-All characters other than the commands are considered comments and ignored. 
+All characters other than the commands are considered comments and ignored. Brainfuck is proven to be Turing-complete, and since this project shows that Python can simulate brainfuck, it follows that Python is Turing-complete.
 
 ## Disclaimer
 
