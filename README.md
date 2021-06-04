@@ -1,12 +1,12 @@
 # Brainfuck Interpreter and Compiler
 
-This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler.
+This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler. Brainfuck is proven to be Turing-complete, and since this project shows that Python can simulate brainfuck, it follows that Python is Turing-complete. Hehe.
 
 ## The Interpreter
 
 The interpreter is a Python program that interprets bf code. Run `$ python bf.py (file)` to run the interpreter on a bf program file.
 
-    usage: bf.py [-h] [-n NUM_CELLS] [-d] [--EOF_value EOF_VALUE] file
+    usage: bf.py [-h] [-n NUM_CELLS] [--EOF_value EOF_VALUE] file
     
     positional arguments:
       file                  the bf program, a "-" signifies to read from stdin
@@ -14,7 +14,6 @@ The interpreter is a Python program that interprets bf code. Run `$ python bf.py
     optional arguments:
       -h, --help            show this help message and exit
       -n NUM_CELLS          number of cells on the tape (default is 65535)
-      -d                    debug flag
       --EOF_value EOF_VALUE
                             end-of-file value in the range 0-255 (default is not to write any value)
 
@@ -22,15 +21,17 @@ The interpreter is a Python program that interprets bf code. Run `$ python bf.py
 
 The compiler is a Python program that transforms bf code into C code. Run `$ python bfc.py (file)` to compile a bf program file. The compiler does the small optimization of compressing strings of +- and separately >< down to single C statements.
 
-    usage: bfc.py [-h] [-d] [-num_cells NUM_CELLS] file
+    usage: bfc.py [-h] [-s] [-num_cells NUM_CELLS] [--EOF_value EOF_VALUE] file
     
     positional arguments:
       file
     
     optional arguments:
       -h, --help            show this help message and exit
-      -d                    whether to generate debug comments in the C output
       -num_cells NUM_CELLS  number of memory tape cells (default is 65535)
+	  -s                    small code formatting for C output
+      --EOF_value EOF_VALUE
+                            end-of-file value in the range 0-255 (default is not to write any value)
 
 ## Example Program
 
@@ -49,7 +50,7 @@ Brainfuck operates on an array of memory cells, the "tape", each initially set t
 * [	Jump past the matching ] if the cell at the pointer is 0
 * ]	Jump back to the matching [ if the cell at the pointer is nonzero
 
-All characters other than the commands are considered comments and ignored. Brainfuck is proven to be Turing-complete, and since this project shows that Python can simulate brainfuck, it follows that Python is Turing-complete.
+All characters other than the commands are considered comments and ignored. 
 
 ## Disclaimer
 
