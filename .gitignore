@@ -1,2 +1,7 @@
+# Compiled files
 *.o
+*.c
+
+# Python cache
 __pycache__/
+
