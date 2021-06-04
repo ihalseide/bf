@@ -4,32 +4,32 @@
 
 import sys, argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('file', help='the bf program, a "-" signifies to read from stdin')
+parser.add_argument('-n', dest='num_cells', default=65535, type=int, help='number of cells on the tape (default is 65535)')
+parser.add_argument('-d', dest='debug', action='store_true', help='debug flag')
+parser.add_argument('--EOF_value', type=int, default=None, help='end-of-file value in the range 0-255 (default is not to write any value)')
+args = parser.parse_args()
+
 def error (*args, **kwargs):
     print(sys.argv[0]+':', *args, **kwargs, file=sys.stderr)
     sys.exit(-1)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('file', help='the bf program input file, default is to read stdin')
-parser.add_argument('-num_cells', default=65535, type=int, help='number of memory cells')
-parser.add_argument('-debug', action='store_true')
-parser.add_argument('--EOF_value', type=int, default=None, help='End Of File value, default is not to write any value upon EOF')
-args = parser.parse_args()
 
 if args.EOF_value is not None and args.EOF_value not in range(255):
     error('error:', 'agument:', 'EOF_value must be in range(0, 255)')
 
 num_cells = args.num_cells
 if args.file == '-':
-    # Read program from stdin until a '!'
+    # Read program from STDIN until a '!'
     program = ''
     while (c := sys.stdin.read(1)) not in ('', '!'):
         program += c
 else:
-    # Read program from file
+    # Read program from FILE
     with open(args.file, 'r') as f:
         program = f.read() 
 
-# Preprocess the brackets matches to increase efficiency a little
+# Preprocess the brackets matches
 matches_start = {}  # maps '[' to ']'
 matches_end = {}    # maps ']' to '['
 start_stack = []
