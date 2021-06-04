@@ -6,8 +6,8 @@ import sys, argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('file')
-parser.add_argument('-debug', action='store_true', help='whether to generate comments in the C output')
-parser.add_argument('-num_cells', default=65535, type=int, help='number of memory cells')
+parser.add_argument('-d', dest='debug', action='store_true', help='whether to generate debug comments in the C output')
+parser.add_argument('-num_cells', default=65535, type=int, help='number of memory tape cells (default is 65535)')
 args = parser.parse_args()
 
 with open(args.file, 'r') as f:
@@ -24,13 +24,10 @@ print(
  * from the file "%s"
  * compiled with "%s"
  */
-
 #include <stdio.h>
-
 char mem [%d];
 char * p; 
-
-int main (int argc, int ** argv) {
+int main () {
     p = &mem;\
 ''' % (args.file, parser.prog, args.num_cells))
 
