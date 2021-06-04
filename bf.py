@@ -4,18 +4,22 @@
 
 import sys, argparse
 
+def error (*args, **kwargs):
+    print(sys.argv[0]+':', *args, **kwargs, file=sys.stderr)
+    sys.exit(-1)
+
 parser = argparse.ArgumentParser()
+parser.add_argument('file', help='the bf program input file, default is to read stdin')
 parser.add_argument('-num_cells', default=65535, type=int, help='number of memory cells')
-parser.add_argument('-file', help='the bf program input file, default is to read stdin')
 parser.add_argument('-debug', action='store_true')
 parser.add_argument('--EOF_value', type=int, default=None, help='End Of File value, default is not to write any value upon EOF')
 args = parser.parse_args()
 
 if args.EOF_value is not None and args.EOF_value not in range(255):
-    raise ValueError('EOF_value must be in range(0, 255)')
+    error('error:', 'agument:', 'EOF_value must be in range(0, 255)')
 
 num_cells = args.num_cells
-if args.file is None:
+if args.file == '-':
     # Read program from stdin until a '!'
     program = ''
     while (c := sys.stdin.read(1)) not in ('', '!'):
@@ -25,38 +29,35 @@ else:
     with open(args.file, 'r') as f:
         program = f.read() 
 
-def error (*args, **kwargs):
-    print(*args, **kwargs, file=sys.stderr)
-    sys.exit(-1)
-
 # Preprocess the brackets matches to increase efficiency a little
 matches_start = {}  # maps '[' to ']'
 matches_end = {}    # maps ']' to '['
+start_stack = []
+line_stack = []
+line = 1
 for i, char in enumerate(program):
     if '[' == char:
-        # Search for the matching ']'
-        depth = 0
-        match = None
-        for i2, char2 in enumerate(program[i:]):
-            if '[' == char2:
-                depth += 1
-            elif ']' == char2:
-                depth -= 1
-                if depth == 0:
-                    match = i + i2
-                    break
-        if match is None:
-            error('syntax error:', 'unmatched "[" at index %d' % i)
-        matches_start[i] = match
-        matches_end[match] = i 
+        start_stack.append(i)
+        line_stack.append(line)
     elif ']' == char:
-        # Make sure there was a matching '['
-        if matches_end.get(i) is None:
-            error('syntax error:', 'unmatched "]" at index %d' % i)
+        try:
+            start_i = start_stack.pop()
+        except IndexError:
+            error('syntax error:', 'unmatched "]" on line %d, column %d' % (line, i + 1))
+        matches_start[start_i] = i
+        matches_end[i] = start_i
+    elif '\n' == char:
+        line += 1
+if start_stack:
+    i = start_stack.pop()
+    error('syntax error:', 'unmatched "[" on line %d, column %d' % (line_stack.pop(), i + 1))
+
+del start_stack
+del line_stack
 
 memory = bytearray([0 for x in range(num_cells)])
-cp = 0              # cell/memory pointer
-ip = 0              # intruction pointer
+cp = 0 # cell/memory pointer
+ip = 0 # intruction pointer
 
 try:
     # Start running the program
@@ -69,7 +70,7 @@ try:
             # Move the pointer to the left
             cp -= 1
             if cp < 0:
-                error("bf error:", "at index %d, pointer moved to negative index on the tape" %ip)
+                error("bf error:", "at index %d, pointer moved to negative address on the tape" %ip)
         elif char == '+':
             # Increment the cell at the pointer
             n = memory[cp]
