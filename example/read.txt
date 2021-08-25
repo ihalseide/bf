@@ -1,2 +1,0 @@
-,[>,]
-$ Read all of the characters from input into memory.
