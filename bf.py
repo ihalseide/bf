@@ -1,9 +1,14 @@
-# bf interpretter
+#!/usr/bin/env python3
+
+'''brainf*ck (bf) interpretter'''
 
 import sys, argparse
 
 # Allowed bf characters
 ALLOWED = '+-<>,.[]'
+
+# Split program and data based on this character when reading the program from stdin
+SPECIAL = '!'
 
 # Print error
 def perror (*args, **kwargs):
@@ -27,7 +32,7 @@ if args.EOF_value is not None and args.EOF_value not in range(255):
 if '-' == args.file:
     # Read from STDIN until a '!'
     program = ''
-    while (c := sys.stdin.read(1)) not in ('', '!'):
+    while (c := sys.stdin.read(1)) not in ('', SPECIAL):
         program += c
 else:
     # Read from FILE
@@ -60,9 +65,12 @@ if start_stack:
     sys.exit(-1)
 del start_stack, line_stack
 
+# Initialize the machine
 memory = bytearray([0 for x in range(args.num_cells)])
 cp = 0 # cell/memory tape pointer
 ip = 0 # intruction pointer
+
+# Start interpreting
 while ip < len(program): 
     char = program[ip] 
     if '>' == char:

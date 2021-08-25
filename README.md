@@ -17,6 +17,8 @@ The interpreter is a Python program that interprets bf code. Run `$ python bf.py
       --EOF_value EOF_VALUE
                             end-of-file value in the range 0-255 (default is not to write any value)
 
+Use '-' as file to read the program from stdin. When reading from stdin, the '!' exclamation mark character denotes the end of the program and the start of the data.
+
 ## The Compiler
 
 The compiler is a Python program that transforms bf code into C code. Run `$ python bfc.py (file)` to compile a bf program file. The compiler does the small optimization of compressing strings of +- and separately >< down to single C statements.
@@ -35,11 +37,11 @@ The compiler is a Python program that transforms bf code into C code. Run `$ pyt
 
 ## Example Program
 
-You can run `$ python bf.py -` and then type `,[.[-],]!`. That runs a "cat" program (a program that outputs it's inputs).
+You can run `$ python bf.py -` and then type `,[.[-],]!`. That runs a "cat" program (a program that repeats its input).
 
 ## Brainf\*ck Language Description
 
-Brainf\*ck operates on an array of memory cells, the "tape", each initially set to zero. A memory cell is a byte and can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
+The brainf\*ck machine consists of a tape of memory cells initially set to zero and a memory pointer. Each memory cell on the tape is represented by a single byte and can hold any value between 0 and 255, inclusive. The cell values overflow and underflow, so if a memory cell is incremented above 255, the value wraps back around to 0, or if a memory cell is decremented below 0, the value wraps back around to 255. The memory pointer can point to any of the memory cells and initially points to the first one. A program consists of a sequence of 1-character commands that affect the pointer and control flow. The commands are:
 
 * \>	Move the pointer to the right
 * <	Move the pointer to the left (but the pointer cannot be negative)
@@ -47,10 +49,10 @@ Brainf\*ck operates on an array of memory cells, the "tape", each initially set 
 * \-	Decrement the memory cell at the pointer
 * .	Output the character signified by the cell at the pointer
 * ,	Input a character and store it in the cell at the pointer
-* [	Jump past the matching ] if the cell at the pointer is 0
-* ]	Jump back to the matching [ if the cell at the pointer is nonzero
+* [	Jump past the matching ] if the cell at the pointer is 0 (flow control)
+* ]	Jump back to the matching [ if the cell at the pointer is nonzero (flow control)
 
-All characters other than the commands are considered comments and ignored. 
+All characters other than the commands are considered comments and ignored, except for the '!' exclamation mark when reading from stdin.
 
 ## Disclaimer
 
