@@ -1,6 +1,6 @@
-# Brainfuck Interpreter and Compiler
+# Brainf\*ck Interpreter and Compiler
 
-This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler. Brainfuck is proven to be Turing-complete, and since this project shows that Python can simulate brainfuck, it follows that Python is Turing-complete. Hehe.
+This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler. Brainf\*ck is proven to be Turing-complete, and since this project shows that Python can simulate brainf\*ck, it follows that Python is Turing-complete. Hehe.
 
 ## The Interpreter
 
@@ -37,9 +37,9 @@ The compiler is a Python program that transforms bf code into C code. Run `$ pyt
 
 You can run `$ python bf.py -` and then type `,[.[-],]!`. That runs a "cat" program (a program that outputs it's inputs).
 
-## Brainfuck Language Description
+## Brainf\*ck Language Description
 
-Brainfuck operates on an array of memory cells, the "tape", each initially set to zero. A memory cell is a byte and can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
+Brainf\*ck operates on an array of memory cells, the "tape", each initially set to zero. A memory cell is a byte and can hold any value between 0 and 255, inclusive. If a memory cell is incremented above 255, the value wraps back around to 0. Also, if a memory cell is decremented below 0, the value wraps back around to 255. There is a pointer to the array of memory cells that initially points to the first memory cell. A program consists of a sequence of commands. The commands are:
 
 * \>	Move the pointer to the right
 * <	Move the pointer to the left (but the pointer cannot be negative)
