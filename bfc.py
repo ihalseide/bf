@@ -27,7 +27,9 @@ with open(args.file, 'r') as f:
     program = f.read() 
 
 def squish (s):
-    return s.replace(' ', '').replace('\n', '')
+    for target in ' \n':
+        s = s.replace(target, '')
+    return s
 
 indent = 1
 def print_line (s):
@@ -120,8 +122,9 @@ try:
             indent -= 1
             print_line('}')
         elif '!' == char:
-            # Stop compiling
-            break 
+            # Stop compiling if reading from stdin
+            if args.file == '-':
+                break 
         elif '\n' == char:
             # Track line numbers
             line += 1
