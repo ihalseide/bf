@@ -164,21 +164,23 @@ def process_brackets (program: str):
     return matches_start, matches_end
 
 def print_usage ():
-    print("usage: %s subcommand [options] file" % sys.argv[0])
+    print("usage: %s [-help] subcommand [options] file" % sys.argv[0])
 
 def print_help ():
-    print_usage()
     print("  Required arguments:")
-    print("    file       File to read program from. Given `-` will")
-    print("               use standard input stream")
+    print("    file           File to read program from. Given `-` will")
+    print("                   use standard input stream")
     print("  Options:")
+    print("    -h,-?          Print this help message and exit")
     print("    -n numCells")
     print("    -eof eofValue")
     print("  Subcommand:")
-    print("    com        compile the program")
-    print("    sim        interpret the program")
+    print("    com            Compile the program")
+    print("    sim            Interpret the program")
 
 if __name__ == '__main__':
+    HELP_LIST = ('h', 'help', '-h', '--help', '-?', '-help', '--h')
+
     # Default option values
     num_cells = 65535
     EOF_value = None
@@ -190,8 +192,15 @@ if __name__ == '__main__':
 
     name = sys.argv[0]
     argv = sys.argv[1:]
+
+    if len(argv) == 0:
+        print_usage()
+        perror("error: not enough arguments")
+        exit(1)
+
     for i, arg in enumerate(argv):
-        if arg.lower() in ('-h', '--help', '-?', '-help'):
+        if arg.lower() in HELP_LIST:
+            print_usage()
             print_help()
             exit(1)
         if i == 0:
@@ -239,7 +248,7 @@ if __name__ == '__main__':
                     exit(1)
                 EOF_value = value
             except ValueError:
-                perror("error: value for `-n` flag must be an integer")
+                perror("error: value for `-eof` flag must be an integer")
                 exit(1)
         else:
             # (required) Filename 
