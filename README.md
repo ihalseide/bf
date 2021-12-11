@@ -2,6 +2,14 @@
 
 This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler. Brainf\_ck is proven to be Turing-complete, and since this project shows that Python can simulate brainf\_ck, it follows that Python is Turing-complete. The GitHub repository for this project is https://github.com/ihalseide/bf. Also, check out https://github.com/ihalseide/bf-example for example programs to try with these scripts.
 
+## Quick start
+
+Run the command with the help flag
+
+```shell
+python bf.py -h
+```
+
 ## Example Program
 
 You can run `$ python bf.py sim -` and then type `,[.[-],]!`. That runs a "cat" program (a program that repeats its input).
@@ -27,5 +35,5 @@ I did not invent the programming language in question. This project's code is ju
 
 ## License
 
-See the file called LICENSE.txt for more info.
+See the LICENSE file for more info.
 
