@@ -3,9 +3,6 @@
 import sys
 from sys import stdout, stdin, stderr, exit
 
-# Allowed bf characters
-ALLOWED = '+-<>,.[]'
-
 # Split program and data based on this character when reading the program from stdin
 SPECIAL = '!'
 
@@ -52,6 +49,11 @@ def simulate_program (program, matches_start, matches_end):
             exit(1)
         ip += 1
 
+# TODO: fullly implement
+# Note: make sure single byte value wrap-around is correct
+# ARM assembly
+# r0 = value
+# r1 = pointer
 def compile_program (program, num_cells, matches_start, matches_end, out_file):
     emit = lambda *args: print(*args, file=out_file)
 
@@ -59,9 +61,12 @@ def compile_program (program, num_cells, matches_start, matches_end, out_file):
     emit("tape: .fill %d" % num_cells)
     emit("    .section .text")
     emit("    .global _start")
+    emit("p_tape:")
+    emit("    .int tape")
     emit("_start:")
-    emit("    mov rax, tape")
-    emit("    ; -- End of init. --")
+    emit("    mov r1, #p_tape")
+    emit("    ldr r1, [r1]")
+    emit("    // -- End of init. --")
 
     label_counter = 0
     label_counter_stack = []
@@ -79,7 +84,7 @@ def compile_program (program, num_cells, matches_start, matches_end, out_file):
                     ptr_change += 1
                 i += 1
 
-            emit("    add rax, %d" % ptr_change)
+            emit("    add r1, #%d" % ptr_change)
 
             del ptr_change
             i -= 1
@@ -94,18 +99,18 @@ def compile_program (program, num_cells, matches_start, matches_end, out_file):
                     val_change += 1
                 i += 1
 
-            emit("    mov [rax], bl")
-            emit("    add bl, %d" % val_change)
-            emit("    mov bl, [rax]")
+            emit("    ldr r0, [r1]")
+            emit("    add r0, #%d" % val_change)
+            emit("    str r0, [r1]")
 
             del val_change
             i -= 1
             continue
         elif "[" == char:
             emit("begin_%d:" % label_counter)
-            emit("    mov [rax], bl")
-            emit("    test bl, 0")
-            emit("    jz end_%d" % label_counter)
+            emit("    ldr r0, [r1]")
+            emit("    tst r0, #0")
+            emit("    beq end_%d" % label_counter)
 
             label_counter_stack.append(label_counter)
             label_counter += 1
@@ -113,25 +118,29 @@ def compile_program (program, num_cells, matches_start, matches_end, out_file):
             assert len(label_counter_stack) != 0, "There should be label_id's on the stack"
             label_id = label_counter_stack.pop()
 
-            emit("    jmp begin_%d" % label_id)
+            emit("    b begin_%d" % label_id)
             emit("end_%d:" % label_id)
 
             del label_id
         elif "." == char:
-            assert False, "not implemented"
+            #assert False, "not implemented"
+            emit("    // <print>")
         elif "," == char:
             if eof_value == None:
-                assert False, "not implemented"
+                #assert False, "not implemented"
+                pass
             else:
-                assert False, "not implemented"
+                #assert False, "not implemented"
+                pass
+            emit("    // <read>")
         else:
             # ignore other characters
             pass
         i += 1
 
-    emit("    ; -- Exit --")
-    emit("    mov rax, 60")
-    emit("    syscall")
+    emit("    // -- Exit --")
+    emit("    mov r7, #1")
+    emit("    swi 0")
 
 def process_brackets (program: str):
     # Preprocess the brackets matches:
