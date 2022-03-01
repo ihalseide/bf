@@ -1,6 +1,8 @@
 # Brainf\_ck Interpreter and Compiler
 
-This project has two Python scripts that you can run: `bf.py`, which is an interpreter, and `bfc.py` which is a compiler. Brainf\_ck is proven to be Turing-complete, and since this project shows that Python can simulate brainf\_ck, it follows that Python is Turing-complete. The GitHub repository for this project is https://github.com/ihalseide/bf. Also, check out https://github.com/ihalseide/bf-example for example programs to try with these scripts.
+This project has one Python script that you can run: `bf.py`, which is an interpreter and a compiler. Brainf\_ck is Turing-complete, and since this project shows that Python can simulate brainf\_ck, it follows that Python is Turing-complete. The GitHub repository for this project is https://github.com/ihalseide/bf. Also, check out https://github.com/ihalseide/bf-example for example programs to try with these scripts.
+
+Note: Compiler currently unfinished.
 
 ## Quick start
 
