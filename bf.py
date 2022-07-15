@@ -6,6 +6,10 @@ from sys import stdout, stdin, stderr, exit
 # Split program and data based on this character when reading the program from stdin
 SPECIAL = '!'
 
+# Whether to check the loop nesting level when compiling.
+# (Disable this if you configured your Python interpreter to have a bigger block stack limit)
+NEST_CHECK = True
+
 def perror (*args, **kwargs):
     print(sys.argv[0]+':', *args, **kwargs, file=stderr)
 
@@ -64,7 +68,7 @@ def simulate_program (program, matches_start, matches_end, EOF_value=None):
 # r1 = pointer
 def compile_program(program, num_cells, out_file, EOF_value=None):
     # Python: where indentation is a feature
-    one_indent = '    '
+    one_indent = ' '
     indent = ''
 
     emit = lambda *args: print(indent, *args, file=out_file, sep='')
@@ -124,6 +128,9 @@ def compile_program(program, num_cells, out_file, EOF_value=None):
             continue
         elif "[" == char:
             # Start of loop
+            if NEST_CHECK and len(label_counter_stack) >= 20:
+                perror(f"compile error: (at index {i}) cannot have more than 20 nested loops because it violates Python syntax")
+                exit(1)
             emit(f"while m[p]: # begin loop #{label_counter}")
             label_counter_stack.append(label_counter)
             label_counter += 1
