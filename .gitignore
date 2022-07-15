@@ -1,7 +1,1 @@
-# Compiled files
-*.o
-*.c
-
-# Python cache
-__pycache__/
-
+examples/
