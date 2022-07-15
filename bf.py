@@ -9,13 +9,13 @@ SPECIAL = '!'
 def perror (*args, **kwargs):
     print(sys.argv[0]+':', *args, **kwargs, file=stderr)
 
-def simulate_program (program, matches_start, matches_end):
+def simulate_program (program, matches_start, matches_end, EOF_value=None):
     memory = bytearray([0 for x in range(num_cells)])
     cp = 0 # cell/memory tape pointer
     ip = 0 # intruction pointer
 
-    while ip < len(program): 
-        char = program[ip] 
+    while ip < len(program):
+        char = program[ip]
         if '>' == char:
             # Move the cell pointer to the right
             cp += 1
@@ -36,7 +36,10 @@ def simulate_program (program, matches_start, matches_end):
             c = sys.stdin.read(1) # Note: c will be empty str upon EOF
             if c:
                 memory[cp] = ord(c)
-            elif EOF_value is not None: 
+            elif EOF_value is None:
+                # Do not change the cell
+                pass
+            else:
                 memory[cp] = EOF_value
         elif '[' == char and not memory[cp]:
             # Jump past the matching ] if the cell at the pointer is 0
@@ -44,29 +47,38 @@ def simulate_program (program, matches_start, matches_end):
         elif ']' == char and memory[cp]:
             # Jump back to the matching [ if the cell at the pointer is not 0
             ip = matches_end[ip]
+        else:
+            # Ignore other characters
+            pass
+
         if cp not in range(num_cells):
             perror('bf error:', 'at program index %d, the pointer moved off of the memory tape (to cell %d)' %(ip + 1, cp))
             exit(1)
+
         ip += 1
 
-# TODO: fullly implement
+# Compile program to Python
 # Note: make sure single byte value wrap-around is correct
 # ARM assembly
 # r0 = value
 # r1 = pointer
-def compile_program (program, num_cells, matches_start, matches_end, out_file):
-    emit = lambda *args: print(*args, file=out_file)
+def compile_program(program, num_cells, out_file, EOF_value=None):
+    # Python: where indentation is a feature
+    one_indent = '    '
+    indent = ''
 
-    emit("    .section .data")
-    emit("tape: .fill %d" % num_cells)
-    emit("    .section .text")
-    emit("    .global _start")
-    emit("p_tape:")
-    emit("    .int tape")
-    emit("_start:")
-    emit("    mov r1, #p_tape")
-    emit("    ldr r1, [r1]")
-    emit("    // -- End of init. --")
+    emit = lambda *args: print(indent, *args, file=out_file, sep='')
+
+    emit("# Program Init")
+    emit("import sys")
+    emit("p = 0")
+    emit(f"m = bytearray([0 for i in range({num_cells})])")
+    if EOF_value is None:
+        emit("def i(): c = sys.stdin.read(1); m[p] = ord(c) if c else m[p]")
+    else:
+        emit(f"def i(): c = sys.stdin.read(1); m[p] = ord(c) if c else {EOF_value}")
+    emit("def o(): sys.stdout.write(chr(m[p]))")
+    emit("# Program Body Begin")
 
     label_counter = 0
     label_counter_stack = []
@@ -75,73 +87,70 @@ def compile_program (program, num_cells, matches_start, matches_end, out_file):
     while i < len(program):
         char = program[i]
         if char in "<>":
+            # Combine multiple arrows
             ptr_change = 0
-            while char in "<>":
-                char = program[i]
-                if "<" == char:
+            while program[i] in "<>":
+                if "<" == program[i]:
                     ptr_change -= 1
                 else:
                     ptr_change += 1
                 i += 1
-
-            emit("    add r1, #%d" % ptr_change)
-
+            if ptr_change > 0:
+                emit(f"p += {ptr_change}")
+            elif ptr_change < 0:
+                ptr_change = -ptr_change
+                emit(f"p -= {ptr_change}")
+            # Ignore 0 change
             del ptr_change
-            i -= 1
             continue
         elif char in "+-":
+            # Combine multiple increments/decrements
             val_change = 0
-            while char in "+-":
-                char = program[i]
-                if '-' == char:
+            while program[i] in "+-":
+                if '-' == program[i]:
                     val_change -= 1
                 else:
                     val_change += 1
                 i += 1
-
-            emit("    ldr r0, [r1]")
-            emit("    add r0, #%d" % val_change)
-            emit("    str r0, [r1]")
-
+            if val_change > 0:
+                # Positive
+                emit(f"m[p] = (m[p] + {val_change}) % 256")
+            elif val_change < 0:
+                # Negative
+                val_change = -val_change
+                emit(f"m[p] = (m[p] - {val_change}) % 256")
+            # Ignore 0 change
             del val_change
-            i -= 1
             continue
         elif "[" == char:
-            emit("begin_%d:" % label_counter)
-            emit("    ldr r0, [r1]")
-            emit("    tst r0, #0")
-            emit("    beq end_%d" % label_counter)
-
+            # Start of loop
+            emit(f"while m[p]: # begin loop #{label_counter}")
             label_counter_stack.append(label_counter)
             label_counter += 1
+            # increase indentation level
+            indent += one_indent
         elif "]" == char:
+            # End of loop
             assert len(label_counter_stack) != 0, "There should be label_id's on the stack"
             label_id = label_counter_stack.pop()
-
-            emit("    b begin_%d" % label_id)
-            emit("end_%d:" % label_id)
-
+            emit(f"# end loop #{label_id}")
+            # decrease indentation level
+            indent = indent[:-len(one_indent)]
             del label_id
         elif "." == char:
-            #assert False, "not implemented"
-            emit("    // <print>")
+            # Output
+            emit("o()")
         elif "," == char:
-            if eof_value == None:
-                #assert False, "not implemented"
-                pass
-            else:
-                #assert False, "not implemented"
-                pass
-            emit("    // <read>")
+            # Input
+            emit("i()")
         else:
-            # ignore other characters
+            # Ignore other characters
             pass
+        # Next character
         i += 1
+    emit("# Program Body End")
 
-    emit("    // -- Exit --")
-    emit("    mov r7, #1")
-    emit("    swi 0")
-
+# Validate and create a lookup table for the bracket match locations within the program string
 def process_brackets (program: str):
     # Preprocess the brackets matches:
     matches_start = dict() # maps '[' to ']'
@@ -173,22 +182,24 @@ def process_brackets (program: str):
     return matches_start, matches_end
 
 def print_usage ():
-    print("usage: %s [-help] subcommand [options] file" % sys.argv[0])
+    print("usage: %s [-h] subcommand [options] file" % sys.argv[0])
 
 def print_help ():
     print("  Required arguments:")
     print("    file           File to read program from. Given `-` will")
-    print("                   use standard input stream")
+    print("                   use standard input stream.")
     print("  Options:")
-    print("    -h,-?          Print this help message and exit")
-    print("    -n numCells")
-    print("    -eof eofValue")
+    print("    -h,            Print this help message and exit.")
+    print("    -n numCells    Number of cells to allocate for the memory tape.")
+    print("    -eof eofValue  Number between 0 and 255 to use as the")
+    print("                   end-of-file value. If not specified,")
+    print("                   the cell value will not be changed by default.")
     print("  Subcommand:")
-    print("    com            Compile the program")
-    print("    sim            Interpret the program")
+    print("    com            Compile the program to Python.")
+    print("    sim            Interpret the program.")
 
 if __name__ == '__main__':
-    HELP_LIST = ('h', 'help', '-h', '--help', '-?', '-help', '--h')
+    HELP_LIST = ('h', 'help', '-h', '-help')
 
     # Default option values
     num_cells = 65535
@@ -260,7 +271,7 @@ if __name__ == '__main__':
                 perror("error: value for `-eof` flag must be an integer")
                 exit(1)
         else:
-            # (required) Filename 
+            # (required) Filename
             if filename != None:
                 # Extra arguments
                 perror("error: unknown extra argument: %s" % repr(arg))
@@ -268,10 +279,11 @@ if __name__ == '__main__':
                 exit(1)
             filename = arg
 
-    assert compile_mode != None
+    # Subcommand must have been set or an error already triggered
+    assert compile_mode is not None
 
     # Filename is required
-    if None == filename:
+    if filename is None:
         perror("error: missing required argument `file`")
         print_usage()
         exit(1)
@@ -286,7 +298,7 @@ if __name__ == '__main__':
     else:
         # Read from FILE
         with open(filename, 'r') as f:
-            program = f.read() 
+            program = f.read()
 
     # Process the bracket matches
     matches_start, matches_end = process_brackets(program)
@@ -298,13 +310,12 @@ if __name__ == '__main__':
             if '-' == filename:
                 out_file = stdout
             else:
-                without_ext = '.'.join(filename.split('.')[:-1])
-                out_file_name = without_ext + '.out'
+                out_file_name = filename + '.py'
                 out_file = open(out_file_name, "w+")
         else:
             out_file = open(out_file_name, "w+")
-        compile_program(program, num_cells, matches_start, matches_end, out_file)
+        compile_program(program, num_cells, out_file, EOF_value)
     else:
-        simulate_program(program, matches_start, matches_end)
+        simulate_program(program, matches_start, matches_end, EOF_value)
 
 
