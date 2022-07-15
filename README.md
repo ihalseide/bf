@@ -2,7 +2,7 @@
 
 This project has one Python script that you can run: `bf.py`, which is an interpreter and a compiler. Brainfuck is Turing-complete, and since this project shows that Python can simulate brainfuck, it follows that Python is Turing-complete. The GitHub repository for this project is https://github.com/ihalseide/bf. Also, check out https://github.com/ihalseide/bf-example for example programs to try with these scripts.
 
-Note: Compiler currently unfinished.
+For more information, I recommend reading this webpage: [https://esolangs.org/wiki/Brainfuck].
 
 ## Quick start
 
@@ -30,10 +30,6 @@ The brainfuck machine consists of a tape of memory cells initially set to zero a
 * `]`	Jump back to the matching [ if the cell at the pointer is nonzero (flow control)
 
 All characters other than the commands are considered comments and ignored, except for the '!' exclamation mark when reading from stdin.
-
-## Disclaimer
-
-I did not invent the programming language in question. This project's code is just my implementation! For more information, I recommend reading this webpage: [https://esolangs.org/wiki/Brainfuck].
 
 ## License
 
