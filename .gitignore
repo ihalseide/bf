@@ -1,1 +1,5 @@
-examples/
+examples/*.c
+examples/*.o
+examples/*.out
+examples/*.exe
+examples/*.py
