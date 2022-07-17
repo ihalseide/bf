@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-import sys
+import os, sys
 from sys import stdout, stdin, stderr, exit
 
 # Split program and data based on this character when reading the program from stdin
 SPECIAL = '!'
 
-# Whether to check the loop nesting level when compiling.
-# (Disable this if you configured your Python interpreter to have a bigger block stack limit)
+# Whether to check the loop nesting level when compiling for Python.
+# (Nice to have because the standard Python interpreter has a block stack limit)
 NEST_CHECK = True
 
 def perror (*args, **kwargs):
@@ -34,10 +34,10 @@ def simulate_program (program, matches_start, matches_end, EOF_value=None):
             memory[cp] = (memory[cp] - 1) % 256
         elif '.' == char:
             # Output the character at the cell pointer
-            sys.stdout.write(chr(memory[cp]))
+            os.write(1, bytes([memory[cp]]))
         elif ',' == char:
             # Input a character and store it in the cell at the pointer
-            c = sys.stdin.read(1) # Note: c will be empty str upon EOF
+            c = os.read(0, 1) # Note: c will be empty str upon EOF
             if c:
                 memory[cp] = ord(c)
             elif EOF_value is None:
@@ -61,27 +61,121 @@ def simulate_program (program, matches_start, matches_end, EOF_value=None):
 
         ip += 1
 
+# Compile program to C
+def compile_program_to_c(program, num_cells, out_file, EOF_value=None, pretty=False):
+    # Indentation to make it look nice
+    emit = None
+    one_indent = '  '
+    indent = 0
+    if pretty:
+        emit = lambda *args: print(one_indent*indent, *args, file=out_file, sep='')
+    else:
+        emit = lambda *args: print(*args, file=out_file, sep='')
+
+    emit("#include <stdio.h>")
+    emit("static unsigned int p = 0;")
+    emit(f"static char m[{num_cells}] = {{}};")
+    # Character input function
+    if EOF_value is None:
+        emit("void i(void) { int c = getchar(); if (c != EOF) m[p] = (char) c; }")
+    else:
+        emit(f"void i(void) {{ int c = getchar(); if (c != EOF) m[p] = (char) c; else c = {EOF_value}; }}")
+    emit("int main(void) {")
+    indent += 1
+
+    label_counter = 0
+    label_counter_stack = []
+
+    i = 0
+    while i < len(program):
+        char = program[i]
+        if char in "<>":
+            # Combine multiple arrows
+            ptr_change = 0
+            while i < len(program) and program[i] in "<>":
+                if "<" == program[i]:
+                    ptr_change -= 1
+                else:
+                    ptr_change += 1
+                i += 1
+            if ptr_change > 0:
+                emit(f"p += {ptr_change};")
+            elif ptr_change < 0:
+                ptr_change = -ptr_change
+                emit(f"p -= {ptr_change};")
+            # Ignore 0 change
+            del ptr_change
+            continue
+        elif char in "+-":
+            # Combine multiple increments/decrements
+            val_change = 0
+            while i < len(program) and program[i] in "+-":
+                if '-' == program[i]:
+                    val_change -= 1
+                else:
+                    val_change += 1
+                i += 1
+            if val_change > 0:
+                # Positive
+                emit(f"m[p] += {val_change};")
+            elif val_change < 0:
+                # Negative
+                val_change = -val_change
+                emit(f"m[p] -= {val_change};")
+            # Ignore 0 change
+            del val_change
+            continue
+        elif "[" == char:
+            # Start of loop
+            if NEST_CHECK and len(label_counter_stack) >= 20:
+                perror(f"compile error: (at index {i}) cannot have more than 20 nested loops because it violates Python syntax")
+                exit(1)
+            emit(f"while (m[p]) {{ /* begin loop #{label_counter} */")
+            label_counter_stack.append(label_counter)
+            label_counter += 1
+            # increase indentation level
+            indent += 1
+        elif "]" == char:
+            # End of loop
+            assert len(label_counter_stack) != 0, "There should be label_id's on the stack"
+            label_id = label_counter_stack.pop()
+            # decrease indentation level
+            indent -= 1
+            emit(f"}} /* end loop #{label_id} */")
+            del label_id
+        elif "." == char:
+            # Output
+            emit("putchar(m[p]);")
+        elif "," == char:
+            # Input
+            emit("i();")
+        else:
+            # Ignore other characters
+            pass
+        # Next character
+        i += 1
+    emit("return 0;");
+    # un-indent
+    indent -= 1
+    emit("}")
+
 # Compile program to Python
-# Note: make sure single byte value wrap-around is correct
-# ARM assembly
-# r0 = value
-# r1 = pointer
-def compile_program(program, num_cells, out_file, EOF_value=None):
-    # Python: where indentation is a feature
+def compile_program_to_python(program, num_cells, out_file, EOF_value=None):
+    # Python: where indentation is required
     one_indent = ' '
     indent = ''
 
     emit = lambda *args: print(indent, *args, file=out_file, sep='')
 
     emit("# Program Init")
-    emit("import sys")
+    emit("import os")
     emit("p = 0")
     emit(f"m = bytearray([0 for i in range({num_cells})])")
     if EOF_value is None:
-        emit("def i(): c = sys.stdin.read(1); m[p] = ord(c) if c else m[p]")
+        emit("def i(): c = os.read(0, 1); m[p] = ord(c) if c else m[p]")
     else:
-        emit(f"def i(): c = sys.stdin.read(1); m[p] = ord(c) if c else {EOF_value}")
-    emit("def o(): sys.stdout.write(chr(m[p]))")
+        emit(f"def i(): c = os.read(0, 1); m[p] = ord(c) if c else {EOF_value}")
+    emit("def o(): os.write(1, bytes([m[p]]))")
     emit("# Program Body Begin")
 
     label_counter = 0
@@ -93,7 +187,7 @@ def compile_program(program, num_cells, out_file, EOF_value=None):
         if char in "<>":
             # Combine multiple arrows
             ptr_change = 0
-            while program[i] in "<>":
+            while i < len(program) and program[i] in "<>":
                 if "<" == program[i]:
                     ptr_change -= 1
                 else:
@@ -110,7 +204,7 @@ def compile_program(program, num_cells, out_file, EOF_value=None):
         elif char in "+-":
             # Combine multiple increments/decrements
             val_change = 0
-            while program[i] in "+-":
+            while i < len(program) and program[i] in "+-":
                 if '-' == program[i]:
                     val_change -= 1
                 else:
@@ -164,7 +258,8 @@ def process_brackets (program: str):
     matches_end = dict() # maps ']' to '['
     start_stack = [] # stack of start bracket indices
     line_stack = [] # keep track of line numbers for reporting syntax errors
-    line = 1 # line number
+    line = 1 # source line number
+    col = 1 # source column number
     for i, char in enumerate(program):
         if '[' == char:
             start_stack.append(i)
@@ -174,12 +269,14 @@ def process_brackets (program: str):
                 start_i = start_stack.pop()
                 line_stack.pop()
             except IndexError:
-                perror('syntax error:', 'unmatched "]" on line %d, column %d' % (line, i + 1))
+                perror("syntax error:", f"unmatched \"]\" on line {line}, column {col}")
                 exit(1)
             matches_start[start_i] = i
             matches_end[i] = start_i
         elif '\n' == char:
             line += 1
+            col = 0
+        col += 1
 
     if start_stack:
         while start_stack:
@@ -189,9 +286,12 @@ def process_brackets (program: str):
     return matches_start, matches_end
 
 def print_usage ():
-    print("usage: %s [-h] subcommand [options] file" % sys.argv[0])
+    name = sys.argv[0]
+    print(f"usage: {name} [-h] <OR> {name} subcommand [options] file")
 
 def print_help ():
+    print("  Program for interpretting or compiling brainfuck.")
+    print()
     print("  Required arguments:")
     print("    file           File to read program from. Given `-` will")
     print("                   use standard input stream.")
@@ -201,9 +301,15 @@ def print_help ():
     print("    -eof eofValue  Number between 0 and 255 to use as the")
     print("                   end-of-file value. If not specified,")
     print("                   the cell value will not be changed by default.")
+    print()
     print("  Subcommand:")
     print("    com            Compile the program to Python.")
     print("    sim            Interpret the program.")
+    print()
+    print("  Compiling options:")
+    print("    -t target      Compilation target: 'py' and 'c' are supported.")
+    print("                   ('c' is the default)")
+    print()
 
 if __name__ == '__main__':
     HELP_LIST = ('h', 'help', '-h', '-help')
@@ -217,15 +323,19 @@ if __name__ == '__main__':
     compile_mode = None
     filename = None
 
+    # For `com` mode only
+    target_value = None
+
     name = sys.argv[0]
     argv = sys.argv[1:]
 
     if len(argv) == 0:
-        print_usage()
         perror("error: not enough arguments")
+        print_usage()
         exit(1)
 
-    for i, arg in enumerate(argv):
+    args_it = enumerate(argv)
+    for i, arg in args_it:
         if arg.lower() in HELP_LIST:
             print_usage()
             print_help()
@@ -243,12 +353,12 @@ if __name__ == '__main__':
                 print_usage()
                 exit(1)
         elif arg.lower() == '-n':
-            # (opt) number of cells
+            # (optional) number of cells
             if i == len(argv) - 1:
                 perror("error: missing value for flag `-n`")
                 print_usage()
                 exit(1)
-            value = argv[i + 1]
+            value = next(args_it)[1]
             try:
                 value = int(value)
                 if value < 0:
@@ -261,12 +371,12 @@ if __name__ == '__main__':
                 print_usage()
                 exit(1)
         elif arg.lower() == '-eof':
-            # (opt) end of input value
+            # (optional) end of input value
             if i == len(argv) - 1:
                 perror("error: missing value for flag `-eof`")
                 print_usage()
                 exit(1)
-            value = argv[i + 1]
+            value = next(args_it)[1]
             try:
                 value = int(value)
                 if value < 0 or value > 255:
@@ -277,6 +387,15 @@ if __name__ == '__main__':
             except ValueError:
                 perror("error: value for `-eof` flag must be an integer")
                 exit(1)
+        elif arg.lower() == '-t':
+            # target
+            if i == len(argv) - 1:
+                perror("error: missing value for target `-t`")
+                print_usage()
+                exit(1)
+            target_value = next(args_it)[1]
+        elif arg == '--':
+            break
         else:
             # (required) Filename
             if filename != None:
@@ -286,8 +405,18 @@ if __name__ == '__main__':
                 exit(1)
             filename = arg
 
-    # Subcommand must have been set or an error already triggered
+    # The subcommand must have been set or we should have already returned an error
     assert compile_mode is not None
+
+    # default compilation target
+    if target_value is None:
+        target_value = 'c'
+
+    # check compilation targets
+    targets = ('c', 'py')
+    if target_value not in targets:
+        perror(f"error: target specified by `-t` must be in {targets}")
+        exit(1)
 
     # Filename is required
     if filename is None:
@@ -300,7 +429,7 @@ if __name__ == '__main__':
     if '-' == filename:
         # Read from STDIN until a '!'
         program = ''
-        while (c := sys.stdin.read(1)) not in ('', SPECIAL):
+        while (c := os.read(0, 1)) not in ('', SPECIAL):
             program += c
     else:
         # Read from FILE
@@ -311,18 +440,27 @@ if __name__ == '__main__':
     matches_start, matches_end = process_brackets(program)
 
     if compile_mode:
-        # Default output file name
+        # Compile to output file
         out_file = None
         if out_file_name == None:
+            # Default output file name
             if '-' == filename:
                 out_file = stdout
             else:
-                out_file_name = filename + '.py'
-                out_file = open(out_file_name, "w+")
-        else:
-            out_file = open(out_file_name, "w+")
-        compile_program(program, num_cells, out_file, EOF_value)
+                out_file_name = filename + '.' + target_value
+
+        # Log compile target
+        print("compiling to", out_file_name)
+
+        with open(out_file_name, "w+") as out_file:
+            # Compile to the target
+            if target_value == 'c':
+                pretty = True
+                compile_program_to_c(program, num_cells, out_file, EOF_value, pretty)
+            elif target_value == 'py':
+                compile_program_to_python(program, num_cells, out_file, EOF_value)
     else:
+        # Simulate
         simulate_program(program, matches_start, matches_end, EOF_value)
 
 
